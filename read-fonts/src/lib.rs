@@ -314,18 +314,30 @@ impl<'a> FontRef<'a> {
         }
     }
 
-    /// Returns the data for the table with the specified tag, if present.
-    pub fn table_data(&self, tag: Tag) -> Option<FontData<'a>> {
+    /// Returns the byte range of the table with the specified tag, if present.
+    /// This can be used to "dematerialize" and "rematerialize" tables (remove
+    /// their underlying slice references' lifetimes and add them back later).
+    pub fn table_range(&self, tag: Tag) -> Option<(u32, u32)> {
         self.table_directory
             .table_records()
             .binary_search_by(|rec| rec.tag.get().cmp(&tag))
             .ok()
             .and_then(|idx| self.table_directory.table_records().get(idx))
             .and_then(|record| {
-                let start = Offset32::new(record.offset()).non_null()?;
-                let len = record.length() as usize;
-                self.data.slice(start..start.checked_add(len)?)
+                let start = Offset32::new(record.offset()).non_null()? as u32;
+                let len = record.length();
+                // It's technically possible that `start + len` exceeds u32::MAX
+                // when neither of the components do, but nobody's making 4GB
+                // .ttc files.
+                let end = start.checked_add(len)?;
+                Some((start, end))
             })
+    }
+
+    /// Returns the data for the table with the specified tag, if present.
+    pub fn table_data(&self, tag: Tag) -> Option<FontData<'a>> {
+        let (start, end) = self.table_range(tag)?;
+        self.data.slice(start as usize..end as usize)
     }
 
     fn with_table_directory(
