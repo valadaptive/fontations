@@ -57,7 +57,7 @@ impl<T: NullValue> Default for Nullable<T> {
 }
 
 macro_rules! impl_offset {
-    ($name:ident, $bits:literal, $rawty:ty) => {
+    ($name:ident, $range_name:ident, $bits:literal, $rawty:ty) => {
         #[doc = concat!("A", stringify!($bits), "-bit offset to a table.")]
         ///
         /// Specific offset fields may or may not permit NULL values; however we
@@ -110,9 +110,33 @@ macro_rules! impl_offset {
         impl NullValue for $name {
             const NULL: $name = $name(<$rawty>::MIN);
         }
+
+        #[doc = concat!("A", stringify!($bits), "-bit range of offsets to a table.")]
+        ///
+        /// More compact than passing around a `Range<usize>` and is `Copy`.
+        #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+        #[cfg_attr(feature = "bytemuck", derive(bytemuck::AnyBitPattern))]
+        #[repr(C)]
+        pub struct $range_name($name, $name);
+
+        impl $range_name {
+            /// Create a new offset range.
+            #[inline]
+            pub const fn from_start_and_len(start: $name, len: $name) -> Self {
+                Self(start, len)
+            }
+
+            pub fn as_byte_range(&self) -> core::ops::Range<usize> {
+                let start = self.0.to_u32() as usize;
+                let len = self.1.to_u32() as usize;
+                let end = start.checked_add(len).expect("Very large font file");
+                start..end
+            }
+        }
     };
 }
 
-impl_offset!(Offset16, 16, u16);
-impl_offset!(Offset24, 24, Uint24);
-impl_offset!(Offset32, 32, u32);
+impl_offset!(Offset16, Offset16Range, 16, u16);
+impl_offset!(Offset24, Offset24Range, 24, Uint24);
+impl_offset!(Offset32, Offset32Range, 32, u32);
