@@ -850,7 +850,7 @@ pub(crate) fn generate_format_group(item: &TableFormat, items: &Items) -> syn::R
 
     Ok(quote! {
         #( #docs )*
-        #[derive(Clone)]
+        #[derive(Clone, Copy)]
         pub enum #name<'a> {
             #( #variants ),*
         }

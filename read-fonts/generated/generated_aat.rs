@@ -7,7 +7,7 @@ use crate::codegen_prelude::*;
 
 /// Lookup tables provide a way of looking up information about a glyph index.
 /// The different cmap subtable formats.
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum Lookup<'a> {
     Format0(Lookup0<'a>),
     Format2(Lookup2<'a>),

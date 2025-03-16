@@ -5,7 +5,7 @@
 #[allow(unused_imports)]
 use crate::codegen_prelude::*;
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum Ift<'a> {
     Format1(PatchMapFormat1<'a>),
     Format2(PatchMapFormat2<'a>),

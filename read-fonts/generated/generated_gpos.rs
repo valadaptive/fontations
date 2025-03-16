@@ -602,7 +602,7 @@ impl<'a> From<ValueFormat> for FieldType<'a> {
 
 /// [Anchor Tables](https://docs.microsoft.com/en-us/typography/opentype/spec/gpos#anchor-tables)
 /// position one glyph with respect to another.
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum AnchorTable<'a> {
     Format1(AnchorFormat1<'a>),
     Format2(AnchorFormat2<'a>),
@@ -1166,7 +1166,7 @@ impl<'a> SomeRecord<'a> for MarkRecord {
 }
 
 /// [Lookup Type 1](https://docs.microsoft.com/en-us/typography/opentype/spec/gpos#lookup-type-1-single-adjustment-positioning-subtable): Single Adjustment Positioning Subtable
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum SinglePos<'a> {
     Format1(SinglePosFormat1<'a>),
     Format2(SinglePosFormat2<'a>),
@@ -1517,7 +1517,7 @@ impl<'a> std::fmt::Debug for SinglePosFormat2<'a> {
 }
 
 /// [Lookup Type 1](https://docs.microsoft.com/en-us/typography/opentype/spec/gpos#lookup-type-1-single-adjustment-positioning-subtable): Single Adjustment Positioning Subtable
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum PairPos<'a> {
     Format1(PairPosFormat1<'a>),
     Format2(PairPosFormat2<'a>),

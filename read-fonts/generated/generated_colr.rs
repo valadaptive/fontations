@@ -805,7 +805,7 @@ impl<'a> SomeRecord<'a> for Clip {
 }
 
 /// [ClipBox](https://learn.microsoft.com/en-us/typography/opentype/spec/colr#baseglyphlist-layerlist-and-cliplist) table
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum ClipBox<'a> {
     Format1(ClipBoxFormat1<'a>),
     Format2(ClipBoxFormat2<'a>),
@@ -1597,7 +1597,7 @@ impl<'a> From<Extend> for FieldType<'a> {
 }
 
 /// [Paint](https://learn.microsoft.com/en-us/typography/opentype/spec/colr#paint-tables) tables
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum Paint<'a> {
     ColrLayers(PaintColrLayers<'a>),
     Solid(PaintSolid<'a>),

@@ -15,7 +15,7 @@ use crate::traversal;
 /// The [loca] table.
 ///
 /// [loca]: https://docs.microsoft.com/en-us/typography/opentype/spec/loca
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum Loca<'a> {
     Short(&'a [BigEndian<u16>]),
     Long(&'a [BigEndian<u32>]),

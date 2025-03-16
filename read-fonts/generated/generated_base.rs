@@ -978,7 +978,7 @@ impl<'a> SomeRecord<'a> for FeatMinMaxRecord {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum BaseCoord<'a> {
     Format1(BaseCoordFormat1<'a>),
     Format2(BaseCoordFormat2<'a>),

@@ -269,7 +269,7 @@ impl<'a> CollectionRef<'a> {
 ///
 /// This is a simple implementation of the [`TableProvider`] trait backed
 /// by a borrowed slice containing font data.
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct FontRef<'a> {
     pub data: FontData<'a>,
     pub table_directory: TableDirectory<'a>,

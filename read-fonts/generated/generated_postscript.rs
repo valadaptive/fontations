@@ -222,7 +222,7 @@ impl<'a> std::fmt::Debug for Index2<'a> {
 }
 
 /// Associates a glyph identifier with a Font DICT.
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum FdSelect<'a> {
     Format0(FdSelectFormat0<'a>),
     Format3(FdSelectFormat3<'a>),
@@ -691,7 +691,7 @@ impl<'a> SomeRecord<'a> for FdSelectRange4 {
 }
 
 /// Charset with custom glyph id to string id mappings.
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum CustomCharset<'a> {
     Format0(CharsetFormat0<'a>),
     Format1(CharsetFormat1<'a>),

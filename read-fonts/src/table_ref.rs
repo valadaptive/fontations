@@ -13,7 +13,7 @@ pub trait MinByteRange {
     fn min_byte_range(&self) -> Range<usize>;
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 /// Typed access to raw table data.
 pub struct TableRef<'a, T> {
     pub(crate) shape: T,

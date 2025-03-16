@@ -1274,7 +1274,7 @@ impl<'a> SomeRecord<'a> for RangeRecord {
 }
 
 /// [Coverage Table](https://docs.microsoft.com/en-us/typography/opentype/spec/chapter2#coverage-table)
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum CoverageTable<'a> {
     Format1(CoverageFormat1<'a>),
     Format2(CoverageFormat2<'a>),
@@ -1609,7 +1609,7 @@ impl<'a> SomeRecord<'a> for ClassRangeRecord {
 }
 
 /// A [Class Definition Table](https://docs.microsoft.com/en-us/typography/opentype/spec/chapter2#class-definition-table)
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum ClassDef<'a> {
     Format1(ClassDefFormat1<'a>),
     Format2(ClassDefFormat2<'a>),
@@ -2623,7 +2623,7 @@ impl<'a> std::fmt::Debug for SequenceContextFormat3<'a> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum SequenceContext<'a> {
     Format1(SequenceContextFormat1<'a>),
     Format2(SequenceContextFormat2<'a>),
@@ -3907,7 +3907,7 @@ impl<'a> std::fmt::Debug for ChainedSequenceContextFormat3<'a> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum ChainedSequenceContext<'a> {
     Format1(ChainedSequenceContextFormat1<'a>),
     Format2(ChainedSequenceContextFormat2<'a>),
@@ -4237,7 +4237,7 @@ impl<'a> std::fmt::Debug for VariationIndex<'a> {
 }
 
 /// Either a [Device] table (in a non-variable font) or a [VariationIndex] table (in a variable font)
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum DeviceOrVariationIndex<'a> {
     Device(Device<'a>),
     VariationIndex(VariationIndex<'a>),
@@ -4590,7 +4590,7 @@ impl<'a> std::fmt::Debug for ConditionSet<'a> {
 ///
 /// Formats 2..5 are implementations of specification changes currently under debate at ISO for an OFF
 /// update. For the time being the specification is <https://github.com/harfbuzz/boring-expansion-spec/blob/main/ConditionTree.md>.
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum Condition<'a> {
     Format1AxisRange(ConditionFormat1<'a>),
     Format2VariableValue(ConditionFormat2<'a>),

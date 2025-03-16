@@ -225,7 +225,7 @@ impl<'a> From<PlatformId> for FieldType<'a> {
 }
 
 /// The different cmap subtable formats.
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum CmapSubtable<'a> {
     Format0(Cmap0<'a>),
     Format2(Cmap2<'a>),
