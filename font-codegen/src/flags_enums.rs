@@ -284,12 +284,21 @@ pub(crate) fn generate_flags(raw: &BitFlags) -> proc_macro2::TokenStream {
         impl font_types::Scalar for #name {
             type Raw = <#typ as font_types::Scalar>::Raw;
 
-            fn to_raw(self) -> Self::Raw {
-                self.bits().to_raw()
+            fn to_raw_be(self) -> Self::Raw {
+                self.bits().to_raw_be()
             }
 
-            fn from_raw(raw: Self::Raw) -> Self {
-                let t = <#typ>::from_raw(raw);
+            fn from_raw_be(raw: Self::Raw) -> Self {
+                let t = <#typ>::from_raw_be(raw);
+                Self::from_bits_truncate(t)
+            }
+
+            fn to_raw_le(self) -> Self::Raw {
+                self.bits().to_raw_le()
+            }
+
+            fn from_raw_le(raw: Self::Raw) -> Self {
+                let t = <#typ>::from_raw_le(raw);
                 Self::from_bits_truncate(t)
             }
         }
@@ -367,12 +376,21 @@ pub(crate) fn generate_raw_enum(raw: &RawEnum) -> TokenStream {
         impl font_types::Scalar for #name {
             type Raw = <#typ as font_types::Scalar>::Raw;
 
-            fn to_raw(self) -> Self::Raw {
-                (self as #typ).to_raw()
+            fn to_raw_be(self) -> Self::Raw {
+                (self as #typ).to_raw_be()
             }
 
-            fn from_raw(raw: Self::Raw) -> Self {
-                let t = <#typ>::from_raw(raw);
+            fn from_raw_be(raw: Self::Raw) -> Self {
+                let t = <#typ>::from_raw_be(raw);
+                Self::new(t)
+            }
+
+            fn to_raw_le(self) -> Self::Raw {
+                (self as #typ).to_raw_le()
+            }
+
+            fn from_raw_le(raw: Self::Raw) -> Self {
+                let t = <#typ>::from_raw_le(raw);
                 Self::new(t)
             }
         }

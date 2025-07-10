@@ -32,21 +32,21 @@ impl BeBuffer {
 
     /// Write any scalar to this buffer.
     pub fn push(mut self, item: impl Scalar) -> Self {
-        self.data.extend(item.to_raw().as_ref());
+        self.data.extend(item.to_raw_be().as_ref());
         self
     }
 
     pub fn push_with_tag(mut self, item: impl Scalar, tag: &str) -> Self {
         self.tagged_locations
             .insert(tag.to_string(), self.data.len());
-        self.data.extend(item.to_raw().as_ref());
+        self.data.extend(item.to_raw_be().as_ref());
         self
     }
 
     /// Write multiple scalars into the buffer
     pub fn extend<T: Scalar>(mut self, iter: impl IntoIterator<Item = T>) -> Self {
         for item in iter {
-            self.data.extend(item.to_raw().as_ref());
+            self.data.extend(item.to_raw_be().as_ref());
         }
         self
     }
@@ -63,7 +63,7 @@ impl BeBuffer {
 
     pub fn write_at(&mut self, tag: &str, item: impl Scalar) {
         let data = self.data_for(tag);
-        let raw = item.to_raw();
+        let raw = item.to_raw_be();
         let new_data: &[u8] = raw.as_ref();
 
         if data.len() < new_data.len() {

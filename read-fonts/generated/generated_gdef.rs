@@ -265,11 +265,18 @@ impl GlyphClassDef {
 
 impl font_types::Scalar for GlyphClassDef {
     type Raw = <u16 as font_types::Scalar>::Raw;
-    fn to_raw(self) -> Self::Raw {
-        (self as u16).to_raw()
+    fn to_raw_be(self) -> Self::Raw {
+        (self as u16).to_raw_be()
     }
-    fn from_raw(raw: Self::Raw) -> Self {
-        let t = <u16>::from_raw(raw);
+    fn from_raw_be(raw: Self::Raw) -> Self {
+        let t = <u16>::from_raw_be(raw);
+        Self::new(t)
+    }
+    fn to_raw_le(self) -> Self::Raw {
+        (self as u16).to_raw_le()
+    }
+    fn from_raw_le(raw: Self::Raw) -> Self {
+        let t = <u16>::from_raw_le(raw);
         Self::new(t)
     }
 }
@@ -357,7 +364,7 @@ impl<'a> AttachList<'a> {
     }
 
     /// A dynamically resolving wrapper for [`attach_point_offsets`][Self::attach_point_offsets].
-    pub fn attach_points(&self) -> ArrayOfOffsets<'a, AttachPoint<'a>, Offset16> {
+    pub fn attach_points(&self) -> ArrayOfOffsets<'a, AttachPoint<'a>, BigEndian<Offset16>> {
         let data = self.data;
         let offsets = self.attach_point_offsets();
         ArrayOfOffsets::new(offsets, data, ())
@@ -558,7 +565,7 @@ impl<'a> LigCaretList<'a> {
     }
 
     /// A dynamically resolving wrapper for [`lig_glyph_offsets`][Self::lig_glyph_offsets].
-    pub fn lig_glyphs(&self) -> ArrayOfOffsets<'a, LigGlyph<'a>, Offset16> {
+    pub fn lig_glyphs(&self) -> ArrayOfOffsets<'a, LigGlyph<'a>, BigEndian<Offset16>> {
         let data = self.data;
         let offsets = self.lig_glyph_offsets();
         ArrayOfOffsets::new(offsets, data, ())
@@ -662,7 +669,7 @@ impl<'a> LigGlyph<'a> {
     }
 
     /// A dynamically resolving wrapper for [`caret_value_offsets`][Self::caret_value_offsets].
-    pub fn caret_values(&self) -> ArrayOfOffsets<'a, CaretValue<'a>, Offset16> {
+    pub fn caret_values(&self) -> ArrayOfOffsets<'a, CaretValue<'a>, BigEndian<Offset16>> {
         let data = self.data;
         let offsets = self.caret_value_offsets();
         ArrayOfOffsets::new(offsets, data, ())
@@ -1111,7 +1118,7 @@ impl<'a> MarkGlyphSets<'a> {
     }
 
     /// A dynamically resolving wrapper for [`coverage_offsets`][Self::coverage_offsets].
-    pub fn coverages(&self) -> ArrayOfOffsets<'a, CoverageTable<'a>, Offset32> {
+    pub fn coverages(&self) -> ArrayOfOffsets<'a, CoverageTable<'a>, BigEndian<Offset32>> {
         let data = self.data;
         let offsets = self.coverage_offsets();
         ArrayOfOffsets::new(offsets, data, ())

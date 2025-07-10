@@ -603,7 +603,7 @@ impl<'a> LayerList<'a> {
     }
 
     /// A dynamically resolving wrapper for [`paint_offsets`][Self::paint_offsets].
-    pub fn paints(&self) -> ArrayOfOffsets<'a, Paint<'a>, Offset32> {
+    pub fn paints(&self) -> ArrayOfOffsets<'a, Paint<'a>, BigEndian<Offset32>> {
         let data = self.data;
         let offsets = self.paint_offsets();
         ArrayOfOffsets::new(offsets, data, ())
@@ -1580,11 +1580,18 @@ impl Extend {
 
 impl font_types::Scalar for Extend {
     type Raw = <u8 as font_types::Scalar>::Raw;
-    fn to_raw(self) -> Self::Raw {
-        (self as u8).to_raw()
+    fn to_raw_be(self) -> Self::Raw {
+        (self as u8).to_raw_be()
     }
-    fn from_raw(raw: Self::Raw) -> Self {
-        let t = <u8>::from_raw(raw);
+    fn from_raw_be(raw: Self::Raw) -> Self {
+        let t = <u8>::from_raw_be(raw);
+        Self::new(t)
+    }
+    fn to_raw_le(self) -> Self::Raw {
+        (self as u8).to_raw_le()
+    }
+    fn from_raw_le(raw: Self::Raw) -> Self {
+        let t = <u8>::from_raw_le(raw);
         Self::new(t)
     }
 }
@@ -6235,11 +6242,18 @@ impl CompositeMode {
 
 impl font_types::Scalar for CompositeMode {
     type Raw = <u8 as font_types::Scalar>::Raw;
-    fn to_raw(self) -> Self::Raw {
-        (self as u8).to_raw()
+    fn to_raw_be(self) -> Self::Raw {
+        (self as u8).to_raw_be()
     }
-    fn from_raw(raw: Self::Raw) -> Self {
-        let t = <u8>::from_raw(raw);
+    fn from_raw_be(raw: Self::Raw) -> Self {
+        let t = <u8>::from_raw_be(raw);
+        Self::new(t)
+    }
+    fn to_raw_le(self) -> Self::Raw {
+        (self as u8).to_raw_le()
+    }
+    fn from_raw_le(raw: Self::Raw) -> Self {
+        let t = <u8>::from_raw_le(raw);
         Self::new(t)
     }
 }

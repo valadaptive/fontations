@@ -2,7 +2,10 @@
 
 use std::collections::HashMap;
 
-use crate::{fields::FieldConstructorInfo, parsing::logged_syn_error};
+use crate::{
+    fields::FieldConstructorInfo,
+    parsing::{logged_syn_error, Endianness},
+};
 use indexmap::IndexMap;
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
@@ -656,6 +659,7 @@ fn generate_format_constructors(item: &TableFormat, items: &Items) -> syn::Resul
 }
 
 fn generate_format_shared_getters(item: &TableFormat, items: &Items) -> syn::Result<TokenStream> {
+    let parent_endianness = item.attrs.endianness();
     // okay so we want to identify the getters that exist on all variants.
     let all_variants = item
         .variants
@@ -663,7 +667,16 @@ fn generate_format_shared_getters(item: &TableFormat, items: &Items) -> syn::Res
         .map(|var| {
             let type_name = var.type_name();
             match items.get(type_name) {
-                Some(Item::Table(item)) => Ok(item),
+                Some(Item::Table(item)) => {
+                    if item.attrs.endianness() != parent_endianness {
+                        Err(logged_syn_error(
+                            type_name.span(),
+                            "must have the same endianness as its parent format table",
+                        ))
+                    } else {
+                        Ok(item)
+                    }
+                }
                 _ => Err(logged_syn_error(
                     type_name.span(),
                     "must be a table defined in this file",
@@ -721,7 +734,7 @@ fn generate_format_shared_getters(item: &TableFormat, items: &Items) -> syn::Res
 fn generate_format_getter_for_shared_field(item: &TableFormat, field: &Field) -> TokenStream {
     let docs = &field.attrs.docs;
     let method_name = &field.name;
-    let return_type = field.table_getter_return_type();
+    let return_type = field.table_getter_return_type(item.attrs.endianness());
     let arms = item.variants.iter().map(|variant| {
         let var_name: &syn::Ident = &variant.name;
         quote!(Self::#var_name(item) => item.#method_name(), )
@@ -824,6 +837,10 @@ pub(crate) fn generate_format_group(item: &TableFormat, items: &Items) -> syn::R
             quote!(Self::#name(table) => table)
         });
 
+    let format_read_method = match item.attrs.endianness() {
+        Endianness::BigEndian => quote! { read_at },
+        Endianness::LittleEndian => quote! { read_scalar_le_at },
+    };
     let format_offset = item
         .format_offset
         .as_ref()
@@ -859,7 +876,7 @@ pub(crate) fn generate_format_group(item: &TableFormat, items: &Items) -> syn::R
 
         impl<'a> FontRead<'a> for #name<'a> {
             fn read(data: FontData<'a>) -> Result<Self, ReadError> {
-                let format: #format = data.read_at(#format_offset)?;
+                let format: #format = data.#format_read_method(#format_offset)?;
                 #maybe_allow_lint
                 match format {
                     #( #match_arms ),*
@@ -998,14 +1015,16 @@ impl Table {
     }
 
     fn iter_field_validation_stmts(&self) -> impl Iterator<Item = TokenStream> + '_ {
-        self.fields.iter().map(Field::field_parse_validation_stmts)
+        self.fields
+            .iter()
+            .map(|f| f.field_parse_validation_stmts(self.attrs.endianness()))
     }
 
     fn iter_table_ref_getters(&self) -> impl Iterator<Item = TokenStream> + '_ {
         let generic = self.attrs.generic_offset.as_ref().map(|attr| &attr.attr);
         self.fields
             .iter()
-            .filter_map(move |fld| fld.table_getter(generic))
+            .filter_map(move |fld| fld.table_getter(generic, self.attrs.endianness()))
             .chain(
                 self.attrs
                     .read_args

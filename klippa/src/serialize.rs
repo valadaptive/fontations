@@ -207,7 +207,7 @@ impl Serializer {
 
     /// Appends a the byte representation of a single scalar type onto the buffer.
     pub fn embed(&mut self, obj: impl Scalar) -> Result<usize, SerializeErrorFlags> {
-        let raw = obj.to_raw();
+        let raw = obj.to_raw_be();
         let bytes = raw.as_ref();
         let size = bytes.len();
 
@@ -233,7 +233,7 @@ impl Serializer {
     pub(crate) fn get_value_at<T: Scalar>(&self, pos: usize) -> Option<T> {
         let len = T::RAW_BYTE_LEN;
         let bytes = self.data.get(pos..pos + len)?;
-        T::read(bytes)
+        T::read_be(bytes)
     }
 
     pub(crate) fn check_assign<T: TryFrom<usize> + Scalar>(
@@ -251,7 +251,7 @@ impl Serializer {
 
     /// copy from a single Scalar type
     pub(crate) fn copy_assign(&mut self, pos: usize, obj: impl Scalar) {
-        let raw = obj.to_raw();
+        let raw = obj.to_raw_be();
         let bytes = raw.as_ref();
         let size = bytes.len();
 

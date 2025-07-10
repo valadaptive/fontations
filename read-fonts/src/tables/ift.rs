@@ -51,14 +51,15 @@ impl TryFrom<MatchModeAndCount> for usize {
     }
 }
 
-impl types::Scalar for MatchModeAndCount {
-    type Raw = <u8 as types::Scalar>::Raw;
-    fn to_raw(self) -> Self::Raw {
-        self.0.to_raw()
+impl types::ScalarWrapper for MatchModeAndCount {
+    type Inner = u8;
+
+    fn from_inner(inner: Self::Inner) -> Self {
+        Self(inner)
     }
-    fn from_raw(raw: Self::Raw) -> Self {
-        let t = <u8>::from_raw(raw);
-        Self(t)
+
+    fn into_inner(self) -> Self::Inner {
+        self.0
     }
 }
 
@@ -92,11 +93,19 @@ impl CompatibilityId {
 impl Scalar for CompatibilityId {
     type Raw = [u8; 16];
 
-    fn from_raw(raw: Self::Raw) -> Self {
+    fn from_raw_be(raw: Self::Raw) -> Self {
         CompatibilityId(raw)
     }
 
-    fn to_raw(self) -> Self::Raw {
+    fn to_raw_be(self) -> Self::Raw {
+        self.0
+    }
+
+    fn from_raw_le(raw: Self::Raw) -> Self {
+        CompatibilityId(raw)
+    }
+
+    fn to_raw_le(self) -> Self::Raw {
         self.0
     }
 }

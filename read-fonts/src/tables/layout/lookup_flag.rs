@@ -89,13 +89,16 @@ impl LookupFlag {
     }
 }
 
-impl types::Scalar for LookupFlag {
-    type Raw = <u16 as types::Scalar>::Raw;
-    fn to_raw(self) -> Self::Raw {
-        self.0.to_raw()
+impl types::ScalarWrapper for LookupFlag {
+    type Inner = u16;
+
+    #[inline(always)]
+    fn from_inner(inner: Self::Inner) -> Self {
+        Self(inner)
     }
-    fn from_raw(raw: Self::Raw) -> Self {
-        let t = <u16>::from_raw(raw);
-        Self(t)
+
+    #[inline(always)]
+    fn into_inner(self) -> Self::Inner {
+        self.0
     }
 }

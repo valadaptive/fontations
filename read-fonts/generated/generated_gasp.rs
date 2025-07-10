@@ -457,11 +457,18 @@ impl std::fmt::UpperHex for GaspRangeBehavior {
 
 impl font_types::Scalar for GaspRangeBehavior {
     type Raw = <u16 as font_types::Scalar>::Raw;
-    fn to_raw(self) -> Self::Raw {
-        self.bits().to_raw()
+    fn to_raw_be(self) -> Self::Raw {
+        self.bits().to_raw_be()
     }
-    fn from_raw(raw: Self::Raw) -> Self {
-        let t = <u16>::from_raw(raw);
+    fn from_raw_be(raw: Self::Raw) -> Self {
+        let t = <u16>::from_raw_be(raw);
+        Self::from_bits_truncate(t)
+    }
+    fn to_raw_le(self) -> Self::Raw {
+        self.bits().to_raw_le()
+    }
+    fn from_raw_le(raw: Self::Raw) -> Self {
+        let t = <u16>::from_raw_le(raw);
         Self::from_bits_truncate(t)
     }
 }

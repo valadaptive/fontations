@@ -107,19 +107,37 @@ impl MajorMinor {
         let [c, d] = self.minor.to_be_bytes();
         [a, b, c, d]
     }
+
+    /// The representation of this version as a little-endian byte array.
+    #[inline]
+    pub const fn to_le_bytes(self) -> [u8; 4] {
+        let [a, b] = self.major.to_le_bytes();
+        let [c, d] = self.minor.to_le_bytes();
+        [a, b, c, d]
+    }
 }
 
 impl crate::Scalar for MajorMinor {
     type Raw = [u8; 4];
 
-    fn from_raw(raw: Self::Raw) -> Self {
+    fn from_raw_be(raw: Self::Raw) -> Self {
         let major = u16::from_be_bytes([raw[0], raw[1]]);
         let minor = u16::from_be_bytes([raw[2], raw[3]]);
         Self { major, minor }
     }
 
-    fn to_raw(self) -> Self::Raw {
+    fn to_raw_be(self) -> Self::Raw {
         self.to_be_bytes()
+    }
+
+    fn from_raw_le(raw: Self::Raw) -> Self {
+        let major = u16::from_le_bytes([raw[0], raw[1]]);
+        let minor = u16::from_le_bytes([raw[2], raw[3]]);
+        Self { major, minor }
+    }
+
+    fn to_raw_le(self) -> Self::Raw {
+        self.to_le_bytes()
     }
 }
 

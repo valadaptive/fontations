@@ -6,6 +6,8 @@ use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::spanned::Spanned;
 
+use crate::parsing::Endianness;
+
 use super::parsing::{
     logged_syn_error, Attr, Condition, Count, CountArg, CustomCompile, Field, FieldReadArgs,
     FieldType, FieldValidation, Fields, IfTransform, NeededWhen, OffsetTarget, Phase, Record,
@@ -354,11 +356,16 @@ pub(crate) struct FieldConstructorInfo {
     pub(crate) manual_compile_type: bool,
 }
 
-fn big_endian(typ: &syn::Ident) -> TokenStream {
-    if typ == "u8" {
-        return quote!(#typ);
+fn endian_wrapper(typ: &syn::Ident, endianness: Endianness, nullable: bool) -> TokenStream {
+    match (endianness, nullable, typ == "u8") {
+        (Endianness::BigEndian, true, false) => quote!(BigEndian<Nullable<#typ>>),
+        (Endianness::BigEndian, false, false) => quote!(BigEndian<#typ>),
+        (Endianness::LittleEndian, true, false) => quote!(LittleEndian<Nullable<#typ>>),
+        (Endianness::LittleEndian, false, false) => quote!(LittleEndian<#typ>),
+        // u8 doesn't need an endianness since it's a single byte
+        (_, true, true) => quote!(Nullable<#typ>),
+        (_, false, true) => quote!(#typ),
     }
-    quote!(BigEndian<#typ>)
 }
 
 fn traversal_arm_for_field(
@@ -514,12 +521,12 @@ fn check_resolution(phase: Phase, field_type: &FieldType) -> syn::Result<()> {
 }
 
 impl Field {
-    pub(crate) fn type_for_record(&self) -> TokenStream {
+    /// Return the copy-on-read wrapper type (BigEndian<T>, LittleEndian<T>, or
+    /// their nullable forms) for this field, as stored in a record.
+    pub(crate) fn type_for_record(&self, endianness: Endianness) -> TokenStream {
         match &self.typ {
-            FieldType::Offset { typ, .. } if self.is_nullable() => {
-                quote!(BigEndian<Nullable<#typ>>)
-            }
-            FieldType::Offset { typ, .. } | FieldType::Scalar { typ } => big_endian(typ),
+            FieldType::Offset { typ, .. } => endian_wrapper(typ, endianness, self.is_nullable()),
+            FieldType::Scalar { typ } => endian_wrapper(typ, endianness, false),
             FieldType::Struct { typ } => typ.to_token_stream(),
             FieldType::ComputedArray(array) => {
                 let inner = array.type_with_lifetime();
@@ -527,12 +534,13 @@ impl Field {
             }
             FieldType::VarLenArray(_) => quote!(compile_error("VarLenArray not used in records?")),
             FieldType::Array { inner_typ } => match inner_typ.as_ref() {
-                FieldType::Offset { typ, .. } if self.is_nullable() => {
-                    quote!(&'a [BigEndian<Nullable<#typ>>])
+                FieldType::Offset { typ, .. } => {
+                    let inner = endian_wrapper(typ, endianness, self.is_nullable());
+                    quote!(&'a [#inner])
                 }
-                FieldType::Offset { typ, .. } | FieldType::Scalar { typ } => {
-                    let be = big_endian(typ);
-                    quote!(&'a [#be])
+                FieldType::Scalar { typ } => {
+                    let inner = endian_wrapper(typ, endianness, false);
+                    quote!(&'a [#inner])
                 }
                 FieldType::Struct { typ } => quote!( &'a [#typ] ),
                 FieldType::PendingResolution { typ } => {
@@ -603,6 +611,27 @@ impl Field {
 
     pub(crate) fn is_conditional(&self) -> bool {
         self.attrs.conditional.is_some()
+    }
+
+    fn cursor_read_method(endianness: Endianness) -> TokenStream {
+        match endianness {
+            Endianness::BigEndian => quote!(read),
+            Endianness::LittleEndian => quote!(read_scalar_le),
+        }
+    }
+
+    fn cursor_read_endian_method(endianness: Endianness) -> TokenStream {
+        match endianness {
+            Endianness::BigEndian => quote!(read_be),
+            Endianness::LittleEndian => quote!(read_le),
+        }
+    }
+
+    fn data_read_at_method(endianness: Endianness) -> TokenStream {
+        match endianness {
+            Endianness::BigEndian => quote!(read_at),
+            Endianness::LittleEndian => quote!(read_scalar_le_at),
+        }
     }
 
     /// Sanity check we are in a sane state for the end of phase
@@ -746,19 +775,20 @@ impl Field {
     }
 
     /// 'raw' as in this does not include handling offset resolution
-    pub(crate) fn raw_getter_return_type(&self) -> TokenStream {
+    pub(crate) fn raw_getter_return_type(&self, endianness: Endianness) -> TokenStream {
         match &self.typ {
             FieldType::Offset { typ, .. } if self.is_nullable() => quote!(Nullable<#typ>),
             FieldType::Offset { typ, .. }
             | FieldType::Scalar { typ }
             | FieldType::Struct { typ } => typ.to_token_stream(),
             FieldType::Array { inner_typ } => match inner_typ.as_ref() {
-                FieldType::Offset { typ, .. } if self.is_nullable() => {
-                    quote!(&'a [BigEndian<Nullable<#typ>>])
+                FieldType::Offset { typ, .. } => {
+                    let inner = endian_wrapper(typ, endianness, self.is_nullable());
+                    quote!(&'a [#inner])
                 }
-                FieldType::Offset { typ, .. } | FieldType::Scalar { typ } => {
-                    let be = big_endian(typ);
-                    quote!(&'a [#be])
+                FieldType::Scalar { typ } => {
+                    let inner = endian_wrapper(typ, endianness, false);
+                    quote!(&'a [#inner])
                 }
                 FieldType::Struct { typ } => quote!(&'a [#typ]),
                 FieldType::PendingResolution { typ } => quote!( &'a [#typ] ),
@@ -793,19 +823,25 @@ impl Field {
         type_tokens
     }
 
-    pub(crate) fn table_getter_return_type(&self) -> Option<TokenStream> {
+    pub(crate) fn table_getter_return_type(&self, endianness: Endianness) -> Option<TokenStream> {
         if !self.has_getter() {
             return None;
         }
-        let return_type = self.raw_getter_return_type();
+        let return_type = self.raw_getter_return_type(endianness);
         if self.is_conditional() {
             Some(quote!(Option<#return_type>))
         } else {
             Some(return_type)
         }
     }
-    pub(crate) fn table_getter(&self, generic: Option<&syn::Ident>) -> Option<TokenStream> {
-        let return_type = self.table_getter_return_type()?;
+
+    /// Generate a getter for a this field as part of a table.
+    pub(crate) fn table_getter(
+        &self,
+        generic: Option<&syn::Ident>,
+        endianness: Endianness,
+    ) -> Option<TokenStream> {
+        let return_type = self.table_getter_return_type(endianness)?;
         let name = &self.name;
         let is_array = self.is_array();
         let is_var_array = self.is_var_array();
@@ -820,14 +856,16 @@ impl Field {
         } else if is_array {
             quote!(self.data.read_array(range).unwrap())
         } else {
-            quote!(self.data.read_at(range.start).unwrap())
+            let read_at = Self::data_read_at_method(endianness);
+            quote!(self.data.#read_at(range.start).unwrap())
         };
         if is_versioned {
             read_stmt = quote!(Some(#read_stmt));
         }
 
         let docs = &self.attrs.docs;
-        let offset_getter = self.typed_offset_field_getter(generic, None);
+        // TODO: is this the correct endianness to use here?
+        let offset_getter = self.typed_offset_field_getter(generic, None, endianness);
 
         Some(quote! {
             #( #docs )*
@@ -840,13 +878,14 @@ impl Field {
         })
     }
 
+    /// Generate a getter for a this field as part of a record.
     pub(crate) fn record_getter(&self, record: &Record) -> Option<TokenStream> {
         if !self.has_getter() {
             return None;
         }
         let name = &self.name;
         let docs = &self.attrs.docs;
-        let return_type = self.raw_getter_return_type();
+        let return_type = self.raw_getter_return_type(record.attrs.endianness());
         // records are actually instantiated; their fields exist, so we return
         // them by reference. This differs from tables, which have to instantiate
         // their fields on access.
@@ -873,7 +912,9 @@ impl Field {
             }
         };
 
-        let offset_getter = self.typed_offset_field_getter(None, Some(record));
+        // TODO: is this the correct endianness to use here?
+        let offset_getter =
+            self.typed_offset_field_getter(None, Some(record), record.attrs.endianness());
         Some(quote! {
             #(#docs)*
             pub fn #name(&self) -> #add_borrow_just_for_record #return_type {
@@ -917,6 +958,7 @@ impl Field {
         &self,
         generic: Option<&syn::Ident>,
         record: Option<&Record>,
+        endianness: Endianness,
     ) -> Option<TokenStream> {
         let (offset_type, target) = match &self.typ {
             _ if self.attrs.offset_getter.is_some() => return None,
@@ -964,8 +1006,9 @@ impl Field {
             } else {
                 quote!(())
             };
+            let element_type = endian_wrapper(offset_type, endianness, self.is_nullable());
             let mut return_type =
-                quote!( #array_type<'a, #target_ident #target_lifetime, #offset_type> );
+                quote!( #array_type<'a, #target_ident #target_lifetime, #element_type> );
             let mut body = quote!(#array_type::new(offsets, data, #args_token));
             if self.is_conditional() {
                 return_type = quote!( Option< #return_type > );
@@ -1059,7 +1102,7 @@ impl Field {
     }
 
     /// the code generated for this field to validate data at parse time.
-    pub(crate) fn field_parse_validation_stmts(&self) -> TokenStream {
+    pub(crate) fn field_parse_validation_stmts(&self, endianness: Endianness) -> TokenStream {
         let name = &self.name;
         // handle the trivial case
         if !self.read_at_parse_time
@@ -1100,9 +1143,11 @@ impl Field {
             assert!(!self.is_array());
             let typ = self.typ.cooked_type_tokens();
             let condition = condition.condition_tokens_for_read();
+            let read_method = Self::cursor_read_method(endianness);
+
             if self.read_at_parse_time {
                 quote! {
-                    let #name = #condition.then(|| cursor.read::<#typ>()).transpose()?.unwrap_or_default();
+                    let #name = #condition.then(|| cursor.#read_method::<#typ>()).transpose()?.unwrap_or_default();
                 }
             } else {
                 quote! {
@@ -1111,7 +1156,8 @@ impl Field {
             }
         } else if self.read_at_parse_time {
             let typ = self.typ.cooked_type_tokens();
-            quote! ( let #name: #typ = cursor.read()?; )
+            let read_method = Self::cursor_read_method(endianness);
+            quote! ( let #name: #typ = cursor.#read_method()?; )
         } else {
             panic!("who wrote this garbage anyway?");
         };
@@ -1198,7 +1244,7 @@ impl Field {
         })
     }
 
-    pub(crate) fn record_init_stmt(&self) -> TokenStream {
+    pub(crate) fn record_init_stmt(&self, endianness: Endianness) -> TokenStream {
         let name = &self.name;
         let rhs = match &self.typ {
             FieldType::Array { .. } => {
@@ -1221,7 +1267,8 @@ impl Field {
                     // directly
                     quote!(cursor.read()?)
                 } else {
-                    quote!(cursor.read_be()?)
+                    let method = Self::cursor_read_endian_method(endianness);
+                    quote!(cursor.#method()?)
                 }
             }
             _ => match self
@@ -1231,7 +1278,10 @@ impl Field {
                 .map(FieldReadArgs::to_tokens_for_validation)
             {
                 Some(args) => quote!(cursor.read_with_args(&#args)?),
-                None => quote!(cursor.read_be()?),
+                None => {
+                    let method = Self::cursor_read_endian_method(endianness);
+                    quote!(cursor.#method()?)
+                }
             },
         };
         quote!( #name : #rhs )

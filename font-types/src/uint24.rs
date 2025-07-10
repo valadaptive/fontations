@@ -41,6 +41,15 @@ impl Uint24 {
     pub const fn from_be_bytes(bytes: [u8; 3]) -> Self {
         Uint24::new(((bytes[0] as u32) << 16) | ((bytes[1] as u32) << 8) | bytes[2] as u32)
     }
+
+    pub const fn to_le_bytes(self) -> [u8; 3] {
+        let bytes = self.0.to_le_bytes();
+        [bytes[0], bytes[1], bytes[2]]
+    }
+
+    pub const fn from_le_bytes(bytes: [u8; 3]) -> Self {
+        Uint24::new(((bytes[2] as u32) << 16) | ((bytes[1] as u32) << 8) | bytes[0] as u32)
+    }
 }
 
 impl From<Uint24> for u32 {

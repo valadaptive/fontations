@@ -809,11 +809,18 @@ impl std::fmt::UpperHex for EntryFormat {
 
 impl font_types::Scalar for EntryFormat {
     type Raw = <u8 as font_types::Scalar>::Raw;
-    fn to_raw(self) -> Self::Raw {
-        self.bits().to_raw()
+    fn to_raw_be(self) -> Self::Raw {
+        self.bits().to_raw_be()
     }
-    fn from_raw(raw: Self::Raw) -> Self {
-        let t = <u8>::from_raw(raw);
+    fn from_raw_be(raw: Self::Raw) -> Self {
+        let t = <u8>::from_raw_be(raw);
+        Self::from_bits_truncate(t)
+    }
+    fn to_raw_le(self) -> Self::Raw {
+        self.bits().to_raw_le()
+    }
+    fn from_raw_le(raw: Self::Raw) -> Self {
+        let t = <u8>::from_raw_le(raw);
         Self::from_bits_truncate(t)
     }
 }
@@ -1141,7 +1148,7 @@ impl<'a> ItemVariationStore<'a> {
     /// A dynamically resolving wrapper for [`item_variation_data_offsets`][Self::item_variation_data_offsets].
     pub fn item_variation_data(
         &self,
-    ) -> ArrayOfNullableOffsets<'a, ItemVariationData<'a>, Offset32> {
+    ) -> ArrayOfNullableOffsets<'a, ItemVariationData<'a>, BigEndian<Nullable<Offset32>>> {
         let data = self.data;
         let offsets = self.item_variation_data_offsets();
         ArrayOfNullableOffsets::new(offsets, data, ())

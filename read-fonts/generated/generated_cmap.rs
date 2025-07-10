@@ -208,11 +208,18 @@ impl PlatformId {
 
 impl font_types::Scalar for PlatformId {
     type Raw = <u16 as font_types::Scalar>::Raw;
-    fn to_raw(self) -> Self::Raw {
-        (self as u16).to_raw()
+    fn to_raw_be(self) -> Self::Raw {
+        (self as u16).to_raw_be()
     }
-    fn from_raw(raw: Self::Raw) -> Self {
-        let t = <u16>::from_raw(raw);
+    fn from_raw_be(raw: Self::Raw) -> Self {
+        let t = <u16>::from_raw_be(raw);
+        Self::new(t)
+    }
+    fn to_raw_le(self) -> Self::Raw {
+        (self as u16).to_raw_le()
+    }
+    fn from_raw_le(raw: Self::Raw) -> Self {
+        let t = <u16>::from_raw_le(raw);
         Self::new(t)
     }
 }

@@ -162,6 +162,9 @@ The following annotations are supported on top-level objects:
 - `#[validate(method)]` Provide a method to perform additional pre-compilation
   validation for this type. The method must be manually implemented on the type,
   with the signature `fn(&self, &mut ValidationCtx)`.
+- `#[little_endian]`: if present, all fields in this table will be assumed to be
+  stored in little-endian byte order (big-endian is the default, as it is used
+  in most OpenType tables).
 
 #### field attributes
 - `#[nullable]`: only allowed on offsets or arrays of offsets, and indicates

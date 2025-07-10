@@ -216,7 +216,7 @@ impl TableData {
     }
 
     pub(crate) fn write<T: Scalar>(&mut self, value: T) {
-        self.write_bytes(value.to_raw().as_ref())
+        self.write_bytes(value.to_raw_be().as_ref())
     }
 
     /// Write the value over existing data at the provided position.
@@ -224,7 +224,7 @@ impl TableData {
     /// Only used in very special cases. The caller is responsible for knowing
     /// what they are doing.
     pub(crate) fn write_over<T: Scalar>(&mut self, value: T, pos: usize) {
-        let raw = value.to_raw();
+        let raw = value.to_raw_be();
         let len = raw.as_ref().len();
         self.bytes[pos..pos + len].copy_from_slice(raw.as_ref());
     }
@@ -254,7 +254,7 @@ impl TableData {
     /// A helper function to read a value out of this data.
     pub(crate) fn read_at<T: Scalar>(&self, pos: usize) -> Option<T> {
         let len = T::RAW_BYTE_LEN;
-        self.bytes.get(pos..pos + len).and_then(T::read)
+        self.bytes.get(pos..pos + len).and_then(T::read_be)
     }
 
     #[cfg(test)]

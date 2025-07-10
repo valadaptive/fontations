@@ -270,7 +270,9 @@ impl<'a> MultiItemVariationStore<'a> {
     }
 
     /// A dynamically resolving wrapper for [`variation_data_offsets`][Self::variation_data_offsets].
-    pub fn variation_data(&self) -> ArrayOfOffsets<'a, MultiItemVariationData<'a>, Offset32> {
+    pub fn variation_data(
+        &self,
+    ) -> ArrayOfOffsets<'a, MultiItemVariationData<'a>, BigEndian<Offset32>> {
         let data = self.data;
         let offsets = self.variation_data_offsets();
         ArrayOfOffsets::new(offsets, data, ())
@@ -373,7 +375,7 @@ impl<'a> SparseVariationRegionList<'a> {
     }
 
     /// A dynamically resolving wrapper for [`region_offsets`][Self::region_offsets].
-    pub fn regions(&self) -> ArrayOfOffsets<'a, SparseVariationRegion<'a>, Offset32> {
+    pub fn regions(&self) -> ArrayOfOffsets<'a, SparseVariationRegion<'a>, BigEndian<Offset32>> {
         let data = self.data;
         let offsets = self.region_offsets();
         ArrayOfOffsets::new(offsets, data, ())
@@ -707,7 +709,7 @@ impl<'a> ConditionList<'a> {
     }
 
     /// A dynamically resolving wrapper for [`condition_offsets`][Self::condition_offsets].
-    pub fn conditions(&self) -> ArrayOfOffsets<'a, Condition<'a>, Offset32> {
+    pub fn conditions(&self) -> ArrayOfOffsets<'a, Condition<'a>, BigEndian<Offset32>> {
         let data = self.data;
         let offsets = self.condition_offsets();
         ArrayOfOffsets::new(offsets, data, ())
@@ -1131,11 +1133,18 @@ impl std::fmt::UpperHex for VarcFlags {
 
 impl font_types::Scalar for VarcFlags {
     type Raw = <u32 as font_types::Scalar>::Raw;
-    fn to_raw(self) -> Self::Raw {
-        self.bits().to_raw()
+    fn to_raw_be(self) -> Self::Raw {
+        self.bits().to_raw_be()
     }
-    fn from_raw(raw: Self::Raw) -> Self {
-        let t = <u32>::from_raw(raw);
+    fn from_raw_be(raw: Self::Raw) -> Self {
+        let t = <u32>::from_raw_be(raw);
+        Self::from_bits_truncate(t)
+    }
+    fn to_raw_le(self) -> Self::Raw {
+        self.bits().to_raw_le()
+    }
+    fn from_raw_le(raw: Self::Raw) -> Self {
+        let t = <u32>::from_raw_le(raw);
         Self::from_bits_truncate(t)
     }
 }

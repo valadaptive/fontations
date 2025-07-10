@@ -408,11 +408,18 @@ impl std::fmt::UpperHex for PatchMapFieldPresenceFlags {
 
 impl font_types::Scalar for PatchMapFieldPresenceFlags {
     type Raw = <u8 as font_types::Scalar>::Raw;
-    fn to_raw(self) -> Self::Raw {
-        self.bits().to_raw()
+    fn to_raw_be(self) -> Self::Raw {
+        self.bits().to_raw_be()
     }
-    fn from_raw(raw: Self::Raw) -> Self {
-        let t = <u8>::from_raw(raw);
+    fn from_raw_be(raw: Self::Raw) -> Self {
+        let t = <u8>::from_raw_be(raw);
+        Self::from_bits_truncate(t)
+    }
+    fn to_raw_le(self) -> Self::Raw {
+        self.bits().to_raw_le()
+    }
+    fn from_raw_le(raw: Self::Raw) -> Self {
+        let t = <u8>::from_raw_le(raw);
         Self::from_bits_truncate(t)
     }
 }
@@ -2041,11 +2048,18 @@ impl std::fmt::UpperHex for EntryFormatFlags {
 
 impl font_types::Scalar for EntryFormatFlags {
     type Raw = <u8 as font_types::Scalar>::Raw;
-    fn to_raw(self) -> Self::Raw {
-        self.bits().to_raw()
+    fn to_raw_be(self) -> Self::Raw {
+        self.bits().to_raw_be()
     }
-    fn from_raw(raw: Self::Raw) -> Self {
-        let t = <u8>::from_raw(raw);
+    fn from_raw_be(raw: Self::Raw) -> Self {
+        let t = <u8>::from_raw_be(raw);
+        Self::from_bits_truncate(t)
+    }
+    fn to_raw_le(self) -> Self::Raw {
+        self.bits().to_raw_le()
+    }
+    fn from_raw_le(raw: Self::Raw) -> Self {
+        let t = <u8>::from_raw_le(raw);
         Self::from_bits_truncate(t)
     }
 }
@@ -2243,7 +2257,7 @@ impl<'a> TableKeyedPatch<'a> {
     }
 
     /// A dynamically resolving wrapper for [`patch_offsets`][Self::patch_offsets].
-    pub fn patches(&self) -> ArrayOfOffsets<'a, TablePatch<'a>, Offset32> {
+    pub fn patches(&self) -> ArrayOfOffsets<'a, TablePatch<'a>, BigEndian<Offset32>> {
         let data = self.data;
         let offsets = self.patch_offsets();
         ArrayOfOffsets::new(offsets, data, ())
@@ -2681,11 +2695,18 @@ impl std::fmt::UpperHex for TablePatchFlags {
 
 impl font_types::Scalar for TablePatchFlags {
     type Raw = <u8 as font_types::Scalar>::Raw;
-    fn to_raw(self) -> Self::Raw {
-        self.bits().to_raw()
+    fn to_raw_be(self) -> Self::Raw {
+        self.bits().to_raw_be()
     }
-    fn from_raw(raw: Self::Raw) -> Self {
-        let t = <u8>::from_raw(raw);
+    fn from_raw_be(raw: Self::Raw) -> Self {
+        let t = <u8>::from_raw_be(raw);
+        Self::from_bits_truncate(t)
+    }
+    fn to_raw_le(self) -> Self::Raw {
+        self.bits().to_raw_le()
+    }
+    fn from_raw_le(raw: Self::Raw) -> Self {
+        let t = <u8>::from_raw_le(raw);
         Self::from_bits_truncate(t)
     }
 }
@@ -3109,11 +3130,18 @@ impl std::fmt::UpperHex for GlyphKeyedFlags {
 
 impl font_types::Scalar for GlyphKeyedFlags {
     type Raw = <u8 as font_types::Scalar>::Raw;
-    fn to_raw(self) -> Self::Raw {
-        self.bits().to_raw()
+    fn to_raw_be(self) -> Self::Raw {
+        self.bits().to_raw_be()
     }
-    fn from_raw(raw: Self::Raw) -> Self {
-        let t = <u8>::from_raw(raw);
+    fn from_raw_be(raw: Self::Raw) -> Self {
+        let t = <u8>::from_raw_be(raw);
+        Self::from_bits_truncate(t)
+    }
+    fn to_raw_le(self) -> Self::Raw {
+        self.bits().to_raw_le()
+    }
+    fn from_raw_le(raw: Self::Raw) -> Self {
+        let t = <u8>::from_raw_le(raw);
         Self::from_bits_truncate(t)
     }
 }
@@ -3242,7 +3270,7 @@ impl<'a> GlyphPatches<'a> {
     }
 
     /// A dynamically resolving wrapper for [`glyph_data_offsets`][Self::glyph_data_offsets].
-    pub fn glyph_data(&self) -> ArrayOfOffsets<'a, GlyphData<'a>, Offset32> {
+    pub fn glyph_data(&self) -> ArrayOfOffsets<'a, GlyphData<'a>, BigEndian<Offset32>> {
         let data = self.data;
         let offsets = self.glyph_data_offsets();
         ArrayOfOffsets::new(offsets, data, ())

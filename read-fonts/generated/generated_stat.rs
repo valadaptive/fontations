@@ -319,7 +319,7 @@ impl<'a> AxisValueArray<'a> {
     }
 
     /// A dynamically resolving wrapper for [`axis_value_offsets`][Self::axis_value_offsets].
-    pub fn axis_values(&self) -> ArrayOfOffsets<'a, AxisValue<'a>, Offset16> {
+    pub fn axis_values(&self) -> ArrayOfOffsets<'a, AxisValue<'a>, BigEndian<Offset16>> {
         let data = self.data;
         let offsets = self.axis_value_offsets();
         ArrayOfOffsets::new(offsets, data, ())
@@ -1338,11 +1338,18 @@ impl std::fmt::UpperHex for AxisValueTableFlags {
 
 impl font_types::Scalar for AxisValueTableFlags {
     type Raw = <u16 as font_types::Scalar>::Raw;
-    fn to_raw(self) -> Self::Raw {
-        self.bits().to_raw()
+    fn to_raw_be(self) -> Self::Raw {
+        self.bits().to_raw_be()
     }
-    fn from_raw(raw: Self::Raw) -> Self {
-        let t = <u16>::from_raw(raw);
+    fn from_raw_be(raw: Self::Raw) -> Self {
+        let t = <u16>::from_raw_be(raw);
+        Self::from_bits_truncate(t)
+    }
+    fn to_raw_le(self) -> Self::Raw {
+        self.bits().to_raw_le()
+    }
+    fn from_raw_le(raw: Self::Raw) -> Self {
+        let t = <u16>::from_raw_le(raw);
         Self::from_bits_truncate(t)
     }
 }

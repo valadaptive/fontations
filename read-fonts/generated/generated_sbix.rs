@@ -297,11 +297,18 @@ impl std::fmt::UpperHex for HeaderFlags {
 
 impl font_types::Scalar for HeaderFlags {
     type Raw = <u16 as font_types::Scalar>::Raw;
-    fn to_raw(self) -> Self::Raw {
-        self.bits().to_raw()
+    fn to_raw_be(self) -> Self::Raw {
+        self.bits().to_raw_be()
     }
-    fn from_raw(raw: Self::Raw) -> Self {
-        let t = <u16>::from_raw(raw);
+    fn from_raw_be(raw: Self::Raw) -> Self {
+        let t = <u16>::from_raw_be(raw);
+        Self::from_bits_truncate(t)
+    }
+    fn to_raw_le(self) -> Self::Raw {
+        self.bits().to_raw_le()
+    }
+    fn from_raw_le(raw: Self::Raw) -> Self {
+        let t = <u16>::from_raw_le(raw);
         Self::from_bits_truncate(t)
     }
 }
@@ -419,7 +426,7 @@ impl<'a> Sbix<'a> {
     }
 
     /// A dynamically resolving wrapper for [`strike_offsets`][Self::strike_offsets].
-    pub fn strikes(&self) -> ArrayOfOffsets<'a, Strike<'a>, Offset32> {
+    pub fn strikes(&self) -> ArrayOfOffsets<'a, Strike<'a>, BigEndian<Offset32>> {
         let data = self.data;
         let offsets = self.strike_offsets();
         let args = self.num_glyphs();

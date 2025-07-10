@@ -42,11 +42,16 @@ impl Int24 {
     }
 
     pub const fn from_be_bytes(bytes: [u8; 3]) -> Self {
-        let extra_byte = ((bytes[0] & 0b10000000) >> 7) * 0b11111111;
-        let extra_byte = (extra_byte as i32) << 24;
-        Int24::new(
-            extra_byte | ((bytes[0] as i32) << 16) | ((bytes[1] as i32) << 8) | bytes[2] as i32,
-        )
+        Int24::new(i32::from_be_bytes([bytes[0], bytes[1], bytes[2], 0]) >> 8)
+    }
+
+    pub const fn to_le_bytes(self) -> [u8; 3] {
+        let bytes = self.0.to_le_bytes();
+        [bytes[0], bytes[1], bytes[2]]
+    }
+
+    pub const fn from_le_bytes(bytes: [u8; 3]) -> Self {
+        Int24::new(i32::from_le_bytes([bytes[0], bytes[1], bytes[2], 0]) >> 8)
     }
 }
 

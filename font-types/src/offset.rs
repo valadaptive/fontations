@@ -18,13 +18,23 @@ impl<T: Scalar> Scalar for Nullable<T> {
     type Raw = T::Raw;
 
     #[inline]
-    fn from_raw(raw: Self::Raw) -> Self {
-        Self(T::from_raw(raw))
+    fn from_raw_be(raw: Self::Raw) -> Self {
+        Self(T::from_raw_be(raw))
     }
 
     #[inline]
-    fn to_raw(self) -> Self::Raw {
-        self.0.to_raw()
+    fn to_raw_be(self) -> Self::Raw {
+        self.0.to_raw_be()
+    }
+
+    #[inline]
+    fn from_raw_le(raw: Self::Raw) -> Self {
+        Self(T::from_raw_be(raw))
+    }
+
+    #[inline]
+    fn to_raw_le(self) -> Self::Raw {
+        self.0.to_raw_le()
     }
 }
 
@@ -88,17 +98,7 @@ macro_rules! impl_offset {
             }
         }
 
-        impl crate::raw::Scalar for $name {
-            type Raw = <$rawty as crate::raw::Scalar>::Raw;
-            fn from_raw(raw: Self::Raw) -> Self {
-                let raw = <$rawty>::from_raw(raw);
-                $name::new(raw)
-            }
-
-            fn to_raw(self) -> Self::Raw {
-                self.0.to_raw()
-            }
-        }
+        $crate::newtype_scalar!($name, <$rawty as crate::raw::Scalar>::Raw);
 
         // useful for debugging
         impl PartialEq<u32> for $name {

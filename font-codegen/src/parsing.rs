@@ -43,6 +43,13 @@ pub(crate) enum Phase {
     Analysis,
 }
 
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
+pub(crate) enum Endianness {
+    #[default]
+    BigEndian,
+    LittleEndian,
+}
+
 #[derive(Debug, Clone)]
 pub(crate) struct Table {
     pub(crate) attrs: TableAttrs,
@@ -69,6 +76,7 @@ pub(crate) struct TableAttrs {
     pub(crate) write_only: Option<syn::Path>,
     /// Custom validation behaviour, must be a fn(&self, &mut ValidationCtx) for the type
     pub(crate) validate: Option<Attr<syn::Ident>>,
+    pub(crate) little_endian: Option<syn::Path>,
 }
 
 #[derive(Debug, Clone)]
@@ -492,6 +500,7 @@ mod kw {
     syn::custom_keyword!(record);
     syn::custom_keyword!(flags);
     syn::custom_keyword!(format);
+    syn::custom_keyword!(little_endian);
     syn::custom_keyword!(group);
     syn::custom_keyword!(skip);
     syn::custom_keyword!(scalar);
@@ -1015,6 +1024,16 @@ impl Parse for VariantAttrs {
     }
 }
 
+impl TableAttrs {
+    pub fn endianness(&self) -> Endianness {
+        if self.little_endian.is_some() {
+            Endianness::LittleEndian
+        } else {
+            Endianness::BigEndian
+        }
+    }
+}
+
 impl FieldAttrs {
     // returns an error if multiple condition attributes are present, which I hope
     // to not need to support
@@ -1040,6 +1059,7 @@ impl FieldAttrs {
 static DOC: &str = "doc";
 static NULLABLE: &str = "nullable";
 static SKIP_GETTER: &str = "skip_getter";
+static LITTLE_ENDIAN: &str = "little_endian";
 static COUNT: &str = "count";
 static SINCE_VERSION: &str = "since_version";
 static IF_COND: &str = "if_cond";
@@ -1170,6 +1190,8 @@ impl Parse for TableAttrs {
                 this.tag = Some(Attr::new(ident.clone(), tag))
             } else if ident == VALIDATE {
                 this.validate = Some(Attr::new(ident.clone(), attr.parse_args()?));
+            } else if ident == LITTLE_ENDIAN {
+                this.little_endian = Some(attr.path().clone());
             } else {
                 return Err(logged_syn_error(
                     ident.span(),

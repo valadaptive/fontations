@@ -18,7 +18,7 @@ pub(crate) fn generate(item: &Record, all_items: &Items) -> syn::Result<TokenStr
     let field_types = item
         .fields
         .iter()
-        .map(Field::type_for_record)
+        .map(|f| f.type_for_record(item.attrs.endianness()))
         .collect::<Vec<_>>();
     let field_docs = item.fields.iter().map(|fld| {
         let docs = &fld.attrs.docs;
@@ -80,7 +80,10 @@ fn generate_read_with_args(item: &Record) -> TokenStream {
     let args_type = args.args_type();
     let destructure_pattern = args.destructure_pattern();
     let field_size_expr: Vec<_> = item.fields.iter().map(Field::record_len_expr).collect();
-    let field_inits = item.fields.iter().map(Field::record_init_stmt);
+    let field_inits = item
+        .fields
+        .iter()
+        .map(|f| f.record_init_stmt(item.attrs.endianness()));
     let constructor_args = args.constructor_args();
     let args_from_constructor_args = args.read_args_from_constructor_args();
 

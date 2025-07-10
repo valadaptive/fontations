@@ -155,12 +155,22 @@ impl FromStr for Tag {
 impl crate::raw::Scalar for Tag {
     type Raw = [u8; 4];
 
-    fn to_raw(self) -> Self::Raw {
+    fn to_raw_be(self) -> Self::Raw {
         self.to_be_bytes()
     }
 
-    fn from_raw(raw: Self::Raw) -> Self {
+    fn from_raw_be(raw: Self::Raw) -> Self {
         Self::from_be_bytes(raw)
+    }
+
+    fn to_raw_le(self) -> Self::Raw {
+        // It's not entirely clear what a little-endian tag would be.
+        unimplemented!()
+    }
+
+    fn from_raw_le(_raw: Self::Raw) -> Self {
+        // It's not entirely clear what a little-endian tag would be.
+        unimplemented!()
     }
 }
 

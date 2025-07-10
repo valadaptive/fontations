@@ -118,10 +118,10 @@ impl<'a> FontReadWithArgs<'a> for FeatureParams<'a> {
         match *args {
             t if t == Tag::new(b"size") => SizeParams::read(bytes).map(Self::Size),
             // to whoever is debugging this dumb bug I wrote: I'm sorry.
-            t if &t.to_raw()[..2] == b"ss" => {
+            t if &t.to_raw_be()[..2] == b"ss" => {
                 StylisticSetParams::read(bytes).map(Self::StylisticSet)
             }
-            t if &t.to_raw()[..2] == b"cv" => {
+            t if &t.to_raw_be()[..2] == b"cv" => {
                 CharacterVariantParams::read(bytes).map(Self::CharacterVariant)
             }
             // NOTE: what even is our error condition here? an offset exists but
